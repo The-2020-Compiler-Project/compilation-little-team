@@ -1,0 +1,7 @@
+const1
+const3
+change1
+change3
+gets1
+var1
+var2
