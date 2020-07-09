@@ -1,1 +1,346 @@
+# 第二次阶段报告
 
+## 概述
+
+在编译原理的第二阶段里，我们小组基本完成了编译器前端和后端的相关工作，剩下的就是各成员部分的整合与调试。在第二阶段里，我主要和组长共同负责语义分析部分。
+
+## 个人工作
+
+1. 符号表相关的一些数据结构及接口的改进
+2. 语义分析的部分内容：if语句、while语句、逻辑表达式的四元式生成
+3. 对之前文法的改进
+
+## 相关代码
+
+1.四元式的结构：
+
+此次更改的地方在于把四元式的内容改成的公用成员已经优化了四元式输出函数以便于四元式的输出，
+
+```c++
+class Quaternion{
+public:
+    Quaternion();
+    Quaternion(string a, string b, string c, string d);
+    string showQuaternion();//打印四元式
+    void setOperator(string opt);//设置算符
+    void setObject1(string obj);//设置对象1
+    void setObject2(string obj);//设置对象2
+    void setResult(string result);//设置结果
+
+    string member[4];//存放四元式里的算符、对象、结果
+
+    string getOperator();
+    string getObject1();
+    string getObject2();
+    string getResult();
+
+private:
+    
+};
+
+string Quaternion::showQuaternion(){
+    string str;
+    str = "( " + member[0] + " , " + member[1] + " , " + member[2] + " , " + member[3] + " )";
+    return str;
+}
+```
+
+2.文法的更改：
+
+之前确定的逻辑表达式文法难以实现用递归下降子程序方法进行语义分析，所以在语义分析中，我把逻辑表达式改成了如下文法，以用来进行对逻辑表达式的语义分析
+
+```
+<逻辑表达式>-><逻辑项>{ || <逻辑项>) | && <逻辑项>}
+
+<逻辑项>-> i  | ( <逻辑表达式> ) | <关系表达式> | ！<逻辑项>
+
+<关系表达式>-><算术表达式> w0 <算术表达式>
+
+```
+
+3. if语句的四元式生成
+
+   翻译文法如下：
+
+   ```
+   <if语句> -> if(<逻辑表达式>) {IF()}<复合语句>| if(<逻辑表达式>）{IF()}<复合语句> else{EL()} <复合语句>{IE()}
+   ```
+
+   
+
+```c++
+    //if语句的语义动作
+    void IF();
+    void EL();
+    void IE();
+
+void Meaning::IF() {
+
+    Quaternion a("if", SEM.top(), "_", "_");
+    QT.push_back(a);//存入qt
+    SEM.pop();
+
+}
+
+void Meaning::EL() {
+
+    Quaternion a("el", "_", "_", "_");
+    QT.push_back(a);
+
+}
+
+void Meaning::IE() {
+    Quaternion a("ie", "_", "_", "_");
+    QT.push_back(a);
+
+}
+
+void Meaning::if_exp()  //if语句
+{
+    if (str == "if")
+        get_next();
+
+    else
+        print_err();
+    if (str == "(")
+        get_next();
+    else
+        print_err();
+    logic_exp();
+    if (str == ")") {
+        get_next();
+        IF();
+    }
+    else
+        print_err();
+
+
+    comp_sta();
+    if (str == "else") {
+        get_next();
+        EL();
+    }
+    else {
+        IE();
+        return;
+    }
+
+
+    comp_sta();
+    IE();
+
+}
+```
+
+4. while语句的四元式生成
+
+翻译文法如下：
+
+```
+<while语句> -> while{WH()}(<逻辑表达式>){DO()}<复合语句>{WE(we)}
+```
+
+```c++
+  //while语句的语义动作
+    void WH();
+    void DO();
+    void WE();
+
+void Meaning::WH() {
+    Quaternion a("wh", "_", "_", "_");
+    QT.push_back(a);
+}
+
+void Meaning::DO() {
+    Quaternion a("do", SEM.top(), "_", "_");
+    QT.push_back(a);
+    SEM.pop();
+}
+
+void Meaning::WE() {
+    Quaternion a("we", "_", "_", "_");
+    QT.push_back(a);
+}
+void Meaning::while_exp()  //while语句
+{
+    if (str == "while") {
+        WH();
+        get_next();
+
+    }
+    else
+        print_err();
+    if (str == "(")
+        get_next();
+    else
+        print_err();
+    logic_exp();
+    if (str == ")") {
+        DO();
+        get_next();
+    }
+    else
+        print_err();
+    comp_sta();
+    WE();
+}
+
+```
+
+5. 逻辑表达式的四元式生成
+
+翻译文法如下：
+
+```
+<while语句> -> while{WH()}(<逻辑表达式>){DO()}<复合语句>{WE(we)}
+
+<逻辑表达式>-><逻辑项>{ || <逻辑项>{OR()}}) | && <逻辑项>{AND()}}
+
+<逻辑项>-> i {PUSH(i)} | ( <逻辑表达式> ) | <关系表达式> | ！<逻辑项>{NOT()}
+
+<关系表达式>-><算术表达式> w0 <算术表达式>{RLT()}
+
+```
+
+```c++
+  //逻辑表达式的语义动作
+    string NEWT();
+    void RLT(string w);
+    void OR();
+    void AND();
+    void NOT();
+    void PUSH(string i);
+
+string Meaning::NEWT() {
+    string t = "t" + to_string(numt);
+    numt++;
+    return t;
+}
+
+
+void Meaning::RLT(string w) {
+    string t = NEWT();
+    string ob2 = SEM.top();
+    SEM.pop();
+    string ob1 = SEM.top();
+    SEM.pop();
+    Quaternion a(w, ob1, ob2, t);
+    SEM.push(t);
+
+}
+
+void Meaning::OR() {
+    string t = NEWT();
+    string ob2 = SEM.top();
+    SEM.pop();
+    string ob1 = SEM.top();
+    SEM.pop();
+    Quaternion a("||", ob1, ob2, t);
+    SEM.push(t);
+}
+
+void Meaning::AND() {
+    string t = NEWT();
+    string ob2 = SEM.top();
+    SEM.pop();
+    string ob1 = SEM.top();
+    SEM.pop();
+    Quaternion a("&&", ob1, ob2, t);
+    SEM.push(t);
+}
+
+void Meaning::NOT() {
+    string t = NEWT();
+    string ob1 = SEM.top();
+    SEM.pop();
+    Quaternion a("!", ob1, "_", t);
+    SEM.push(t);
+}
+
+void Meaning::PUSH(string i) {
+    SEM.push(i);
+}
+
+void Meaning::rela_exp()  //关系表达式
+{
+    string w;
+    arti_exp();
+    if (str == ">" || str == ">=" || str == "<" || str == "<=" || str == "==") {
+        w = str;
+        get_next();
+    }
+    else print_err();
+
+    arti_exp();
+    RLT(w);
+}
+
+void Meaning::logic_exp() {  //逻辑表达式
+    logic_e();
+    while (1) {
+        if (str == "||") {
+            get_next();
+            logic_e();
+            OR();
+        }
+        else if (str == "&&") {
+            get_next();
+            logic_e();
+            AND();
+        }
+        else
+            return;
+
+    }
+}
+
+void Meaning::logic_e()  //逻辑项
+{
+    if (judge_IT()) {
+        PUSH(str);
+        get_next();
+        return;
+    }
+    else if (str == "0") {
+        PUSH(str);
+        get_next();
+        return;
+    }
+    else if (str == "1") {
+        PUSH(str);
+        get_next();
+        return;
+    }
+    else if (str == "!") {
+        get_next();
+        logic_e();
+        NOT();
+    }
+    else if (str == "(") {
+        get_next();
+        logic_exp();
+        if (str == ")") {
+            get_next();
+            return;
+        }
+        else
+            print_err();
+    }
+    else
+        rela_exp();
+}
+```
+
+
+
+## 问题与反思
+
+在语义分析阶段，我遇到了很多问题，比如之前的文法不适合用递归下降子程序方法进行语义分析，之前的接口看不太懂等等。
+
+我觉得我前期在文法设计上有不少问题，忽视了文法的重要性，导致了语法分析和语义分析阶段遇到了很多问题，在今后的课设中应该注意对前期环节的重视。
+
+## 课设总结
+
+这一次课设大概是入学以来做过的最充实的一次课设吧——三个课设同时进行，还有过程验收环节。
+
+这几个课设让我充分认识到了书本上的知识到实践有着很大的距离，基础知识是实践的前提，如果不实践就不会知道自己的基础知识是多么不牢固。今后的学习应该充分认识到“边学边动手”的重要性，尤其对于计算机科学与技术这门偏工科的学科。
