@@ -1,0 +1,30 @@
+Global Var:
+change1 I 5
+const1 I 5
+const2 C 5
+const3 I 5
+code
+Fuc:
+sum I 1
+code
++ var1 var2 t1
+= t1 _ change1
+return _ _ change1
+= 13 _ const1
+= '_' _ const2
+= 3 _ const3
+== const3 0 t2
+if t2 _ _
+= 'a' _ const2
+el _ _ _
+= 'b' _ const2
+ie _ _ _
+wh _ _ _
+< const3 0 t3
+do t3 _ _
+= 2 _ const1
++ const3 1 t4
+= t4 _ const3
+we _ _ _
+= sum _ const1
+return _ _ 0

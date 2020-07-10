@@ -1,0 +1,25 @@
+#include<stdio.h>
+int sum(int var1,int var2)
+{
+int change1=var1+var2;
+return change1;
+}
+int main()
+{
+int const1=13;
+char const2='_';
+int const3=3;
+if(const3==0)
+{
+    const2='a';
+}
+else{
+    const2='b';
+}
+while(const3<0){
+   const1=2;
+   const3=const3+1;
+}
+const1=sum(const1,const3);
+return 0;
+}

@@ -1,0 +1,16 @@
+float FLOATTK
+int INTTK
+include INCLUDETK
+main MAINTK
+stdio.h STDIO.HTK
+return RETURNTK
+printf PRINTFTK
+const CONSTTK
+char CHARTK
+void VOIDTK
+if IFTK
+else ELSETK
+do DOTK
+while WHILETK
+for FORTK
+scanf SCANFTK

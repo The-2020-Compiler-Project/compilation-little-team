@@ -1,0 +1,7 @@
+sum
+var1
+var2
+change1
+const1
+const2
+const3
